@@ -1,0 +1,5 @@
+-define(SERVER, chatapp_server).
+-define(CLIENT, chatapp_client).
+-define(SERVER_NODE, server@whitehorse).
+-define(TIMEOUT, 8000).
+-define(CHATROOM_LIFETIME, 7 * 24 * 60 * 60 * 1000).
