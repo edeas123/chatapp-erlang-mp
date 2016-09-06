@@ -2,6 +2,7 @@
 -module(chatapp_client).
 -export([init/1]).
 
+-author("Obaro Odiete").
 -include("chatapp_config.hrl").
 
 %% client process

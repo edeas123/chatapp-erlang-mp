@@ -1,5 +1,5 @@
--define(SERVER, chatapp_server).
--define(CLIENT, chatapp_client).
--define(SERVER_NODE, server@whitehorse).
--define(TIMEOUT, 8000).
--define(CHATROOM_LIFETIME, 7 * 24 * 60 * 60 * 1000).
+-define(SERVER, chatapp_server). % server process
+-define(CLIENT, chatapp_client). % client process
+-define(SERVER_NODE, server@whitehorse). % TODO: remove
+-define(TIMEOUT, 8000). % global timeout
+-define(CHATROOM_LIFETIME, 7 * 24 * 60 * 60 * 1000). % chatroom lifetime

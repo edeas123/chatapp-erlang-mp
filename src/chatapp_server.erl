@@ -4,6 +4,7 @@
 -export([start/0, start_link/0, stop/0]).
 -export([init/0]).
 
+-author("Obaro Odiete").
 -record(state, {clients, rooms, clientslist}).
 
 -include("chatapp_config.hrl").
@@ -30,7 +31,7 @@ init() ->
 %% the server process itself
 loop(S=#state{}) ->
 	receive
-		{Client, {login, Username}} ->
+		{Client, {login, Username}} -> % login user
 			ClientList = S#state.clientslist,
 			ClientExist = lists:member(Username, ClientList),
 
@@ -41,12 +42,12 @@ loop(S=#state{}) ->
 				erlang:link(Client),
 				UpdatedClients = orddict:store(Client, Username, S#state.clients),
 				UpdatedClientsList = lists:append(ClientList, [Username]),
-				Client ! {ok, login_successful},	
+				Client ! {ok, login_successful},
 				io:format("Connected user ~p ~n",[Username]),	% replace with logging
 				loop(S#state{clients=UpdatedClients, clientslist=UpdatedClientsList})
 			end;
 		
-		{Client, {create, Roomname}} -> 
+		{Client, {create, Roomname}} -> % create room
 			
 			RoomExist = orddict:is_key(Roomname, S#state.rooms),
 			if RoomExist ->
@@ -60,14 +61,13 @@ loop(S=#state{}) ->
 				loop(S#state{rooms=UpdatedRooms})
 			end;
 
-		{Client, {list}} -> 
+		{Client, {list}} -> % list rooms
 			Rooms = S#state.rooms,
 			Roomslist = orddict:fetch_keys(Rooms),
 			Client ! {list, Roomslist},
 			loop(S);
 
-		{Client, {join, Roomname}} -> 
-			%%% process request by client to join room
+		{Client, {join, Roomname}} -> % join room
 			
 			%% find out if room exist
 			Rooms = S#state.rooms,
@@ -86,12 +86,12 @@ loop(S=#state{}) ->
 			end,
 			loop(S);
 			
-		shutdown ->
+		shutdown -> % shutdown server
 			exit(shutdown);
         
-        {'EXIT', Pid, Why} ->
+        {'EXIT', Pid, Why} -> % trapped exit messages from the chatrooms and connected clients
 
-        	%% find out if its a client or a chatroom
+        	%% find out if it's from client or a chatroom
         	ClientExit = orddict:is_key(Pid, S#state.clients),
 
         	if ClientExit ->
@@ -111,9 +111,7 @@ loop(S=#state{}) ->
 				loop(S#state{rooms=UpdatedRooms})
         	end;
 
-        Unknown ->
+        Unknown -> % unknown message
             io:format("Unknown message: ~p~n",[Unknown]),
             loop(S)
 	end.
-
-

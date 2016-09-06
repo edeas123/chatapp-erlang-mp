@@ -26,6 +26,7 @@
 -module(chatapp_user_interface).
 -export([login/1, logout/0, create_room/1, list_rooms/0, join_room/1, leave_room/1, message_room/2]).
 
+-author("Obaro Odiete").
 -include("chatapp_config.hrl").
 
 login(Username) -> 
