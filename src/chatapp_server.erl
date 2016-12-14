@@ -26,7 +26,9 @@ stop() ->
 %% server internal interface
 init() ->
 	process_flag(trap_exit, true),
-	loop(#state{clients=orddict:new(), rooms=orddict:new(), clientslist=[]}).
+	io:format("Server started on ~s ~n", [?SERVER_NODE]),
+	loop(#state{clients=orddict:new(), rooms=orddict:new(), clientslist=[]}). % clients is a dictionary with the client process ID as key and Username as value
+																			  % rooms is a dictionary with room name as key amd room process ID as value
 
 %% the server process itself
 loop(S=#state{}) ->
@@ -43,7 +45,7 @@ loop(S=#state{}) ->
 				UpdatedClients = orddict:store(Client, Username, S#state.clients),
 				UpdatedClientsList = lists:append(ClientList, [Username]),
 				Client ! {ok, login_successful},
-				io:format("Connected user ~p ~n",[Username]),	% replace with logging
+				io:format("~p connected ~n",[Username]),	% replace with logging
 				loop(S#state{clients=UpdatedClients, clientslist=UpdatedClientsList})
 			end;
 		
@@ -57,7 +59,7 @@ loop(S=#state{}) ->
 				RoomPid = chatapp_chatroom:start_link(Roomname),
 				UpdatedRooms = orddict:store(Roomname, RoomPid, S#state.rooms),
 				Client ! {ok, chatroom_created},
-				io:format("Created room ~p ~n",[Roomname]),
+				io:format("Created room: ~p ~n",[Roomname]),
 				loop(S#state{rooms=UpdatedRooms})
 			end;
 
@@ -80,7 +82,7 @@ loop(S=#state{}) ->
 
 				%% send message containing the client details to the chatroom address
 				RoomPid ! {join, Client, Clientname},
-				io:format("Joined room ~p ~n", [Roomname]);
+				io:format("~p joined room ~p ~n", [Clientname, Roomname]);
 			not RoomExist -> 
 				Client ! {failed, room_does_not_exist}
 			end,

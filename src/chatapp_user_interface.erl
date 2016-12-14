@@ -5,7 +5,7 @@
 %%%		Allow a user with Username to connect to the server with a suitable name.
 %%%		If the name is already logged-in, refuse connection with a suitable
 %%%		error message that user with that name already logged-in.
-%%% logouy(Username)
+%%% logout(Username)
 %%%		Disconnect Username from the server.
 %%%	create_room(Roomname)
 %%%		Create a chatroom with name, Roomname. 
@@ -29,12 +29,20 @@
 -author("Obaro Odiete").
 -include("chatapp_config.hrl").
 
+%main() ->
+	%% Prompt for username
+	%% Call login/1 with username
+	%% Depending on the outcome of login:
+		%% Prompt for username OR
+		%% Print out all the options
+	%% Keep listening for any of the calls and call the appropriate function
+
 login(Username) -> 
 	LoggedIn = check_login(),
 	if LoggedIn -> 
-			client_already_logged_on;
-		true -> 
-			register(?CLIENT, spawn(?CLIENT, init, [Username]))
+		client_already_logged_on;
+	not LoggedIn -> 
+		register(?CLIENT, spawn(?CLIENT, init, [Username]))
 	end.
 
 logout() ->
@@ -55,7 +63,7 @@ create_room(Roomname) ->
 list_rooms() ->
 	LoggedIn = check_login(),
 	if LoggedIn -> 
-		?CLIENT ! {list},
+		?CLIENT !{list},
 		ok;
 	not LoggedIn -> 
 		client_not_logged_on
@@ -89,7 +97,7 @@ message_room(Roomname, Message) ->
 	end.
 
 check_login() ->
-	case whereis(?CLIENT) of
+	case erlang:whereis(?CLIENT) of
 		undefined -> false;
 		_ -> true
 	end.

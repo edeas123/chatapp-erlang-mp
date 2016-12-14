@@ -18,7 +18,7 @@ init(Username) ->
 		io:format("No response from server~n", []),
 		exit(timeout)
 	end,
-	loop(orddict:new()).
+	loop(orddict:new()). % the state is a dictionary with keys, the roomname and value, the chatroom PID
 
 loop(S) ->
 	receive
@@ -47,31 +47,37 @@ loop(S) ->
 			end;
 		
 		{join, Roomname} ->
-			%%TODO: Check if already member of room
-			{?SERVER, ?SERVER_NODE} ! {self(), {join, Roomname}},
-			receive
-				{joined, Roomname, RoomPid, Messages} -> 
-					io:format("Joined room ~p ~n", [Roomname]),
+			%% Check if a member of room
+			RoomMember = orddict:is_key(Roomname, S),
+			if RoomMember ->
+				io:format("user_already_in_chatroom. ~n", []),
+				loop(S);
+			not RoomMember ->
+				{?SERVER, ?SERVER_NODE} ! {self(), {join, Roomname}},
+				receive
+					{joined, Roomname, RoomPid, Messages} -> 
+						io:format("Joined room ~p ~n", [Roomname]),
 
-					% output message archives from chatroom
-					[io:format("(~p-~p-~p ~p:~p) ~p: ~p ~n", 
-						[D, MM, Y, H, M, Sender, Message]) || {{{Y,MM,D},{H,M,_}}, Sender, Message} <- Messages],
-					
-					% update the state of the client with the new connected chatroom details
-					UpdatedState = orddict:store(Roomname, RoomPid, S),
+						% output message archives from chatroom
+						[io:format("(~p-~p-~p ~p:~p) ~p: ~p ~n", 
+							[D, MM, Y, H, M, Sender, Message]) || {{{Y,MM,D},{H,M,_}}, Sender, Message} <- Messages],
+						
+						% update the state of the client with the new connected chatroom details
+						UpdatedState = orddict:store(Roomname, RoomPid, S),
 
-					% monitor the chatroom
-					io:format("Chatroom ~p ~n", [RoomPid]),
-					erlang:monitor(process, RoomPid),
+						% monitor the chatroom
+						% io:format("Chatroom ~p ~n", [RoomPid]),
+						erlang:monitor(process, RoomPid),
 
-					% loop
-					loop(UpdatedState);
-				{failed, Why} ->
-					io:format("~p ~n", [Why]),
-					loop(S)
-			after ?TIMEOUT ->
-				io:format("Join room: No response from server or chatroom ~n", [])
-			end;						
+						% loop
+						loop(UpdatedState);
+					{failed, Why} ->
+						io:format("~p ~n", [Why]),
+						loop(S)
+				after ?TIMEOUT ->
+					io:format("Join room: No response from server or chatroom ~n", [])
+				end					
+			end;
 
 		{leave, Roomname} ->
 
@@ -101,7 +107,7 @@ loop(S) ->
 				%% Get the address of the chatroom
 				RoomPid = orddict:fetch(Roomname, S),
 				
-				%% Send message directly to the chatroom to leave
+				%% Send message directly to the chatroom
 				RoomPid ! {message, self(), Message};
 
 			not RoomMember ->
